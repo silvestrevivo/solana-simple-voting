@@ -2,7 +2,7 @@
 seeds = false
 skip-lint = false
 [programs.localnet]
-solana_simple_voting = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+solana_simple_voting = "DBC3gQSeCsaJPJy31Q9Yar2E3y2DESKwpDGL6gjEGU5M"
 
 [registry]
 url = "https://api.apr.dev"

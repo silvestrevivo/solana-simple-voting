@@ -24,6 +24,7 @@ pub mod solana_simple_voting {
             } else if sign == "+" {
                 base_account.yes += 1;
             }
+            base_account.voters.push(voter);
         } else {
             return err!(MyError::NoVote);
         }

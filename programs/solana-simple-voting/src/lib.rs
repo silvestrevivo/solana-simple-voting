@@ -6,8 +6,9 @@ declare_id!("DBC3gQSeCsaJPJy31Q9Yar2E3y2DESKwpDGL6gjEGU5M");
 pub mod solana_simple_voting {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+    pub fn initialize(ctx: Context<Initialize>, wl: Vec<String>,) -> Result<()> {
         let base_account = &mut ctx.accounts.base_account;
+        base_account.wl = wl;
         base_account.voters = Vec::new();
         base_account.yes = 0;
         base_account.no = 0;
@@ -18,15 +19,19 @@ pub mod solana_simple_voting {
         let base_account = &mut ctx.accounts.base_account;
         let voter = ctx.accounts.user.key().to_string();
 
-        if !base_account.voters.contains(&voter) {
-            if sign == "-" {
-                base_account.no += 1;
-            } else if sign == "+" {
-                base_account.yes += 1;
+        if base_account.wl.contains(&voter) {
+            if !base_account.voters.contains(&voter) {
+                if sign == "-" {
+                    base_account.no += 1;
+                } else if sign == "+" {
+                    base_account.yes += 1;
+                }
+                base_account.voters.push(voter);
+            } else {
+                return err!(MyError::NoVote);
             }
-            base_account.voters.push(voter);
         } else {
-            return err!(MyError::NoVote);
+            return err!(MyError::NoWL);
         }
 
         Ok(())
@@ -53,23 +58,28 @@ pub struct VoteCtx<'info> {
 #[account]
 #[derive(Default)]
 pub struct BaseAccount {
+    wl: Vec<String>,
     voters: Vec<String>,
     yes: u8,
     no: u8,
 }
 
 const DISCRIMINATOR_LENGTH: usize = 8;
-const STRING_LENGTH_PREFIX: usize = 4; // Stor
-const MAX_VOTE_LENGTH: usize = 1 * 4; // 280 chars maes the size of the string.
+const VECTOR_LENGTH_PREFIX: usize = 4;
+const STRING_LENGTH_PREFIX: usize = 4; // Stores the size of the string.
+const MAX_STRING_LENGTH: usize = 15 * 4; // 50 chars max.
+const VECTOR_STRING_LENGTH: usize = ( STRING_LENGTH_PREFIX +  MAX_STRING_LENGTH ) * 10;
+const MAX_VOTE_LENGTH: usize = 8;
 
 
 impl BaseAccount {
-    const LEN: usize = DISCRIMINATOR_LENGTH
-        + STRING_LENGTH_PREFIX + MAX_VOTE_LENGTH;
+    const LEN: usize = DISCRIMINATOR_LENGTH + VECTOR_LENGTH_PREFIX + ( VECTOR_STRING_LENGTH * 2 ) + (MAX_VOTE_LENGTH * 2 );
 }
 
 #[error_code]
 pub enum MyError {
     #[msg("You can not vote, you have already done it")]
-    NoVote
+    NoVote,
+    #[msg("You are not part of the whitelist")]
+    NoWL
 }
